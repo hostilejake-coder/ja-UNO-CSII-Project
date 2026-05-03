@@ -78,21 +78,20 @@ class MainWindow(QMainWindow):
             self.chunks = int(self.user_chunks_input.toPlainText()) 
             self.epochs = int(self.user_enochs_input.toPlainText())
             self.seed = int(self.user_randomseed_input.toPlainText())
-            infile = self.user_file_input.toPlainText()
-            '''
-            While searches for file in current directory, 
-            then checks parent/data directory before giving up and asking for valid file name
-            '''
-            while not (os.path.isfile(infile)):
-                self.event_view_window.append("File not found - Checking other directories...")
-                alt_path = os.path.join("..", "data", infile)
-                if os.path.isfile(alt_path):
-                    infile = alt_path
-                    self.event_view_window.append(f"File found: {infile}")
-                    break
-                else:
-                    self.event_view_window.append("File does not exist in other directories\nPlease enter a valid file name.\n or add data to ~/intrusiongui/data/")
-                    return
+
+            # FOR LATER USE IN UPGRADED VERSION
+            # ---------------------------------
+            #infile = self.<user_file_input>
+            # while not (os.path.isfile(infile)):
+            #     self.event_view_window.append("File not found - Checking other directories...")
+            #     alt_path = os.path.join("..", "data", infile)
+            #     if os.path.isfile(alt_path):
+            #         infile = alt_path
+            #         self.event_view_window.append(f"File found: {infile}")
+            #         break
+            #     else:
+            #         self.event_view_window.append("File does not exist in other directories\nPlease enter a valid file name.\n or add data to ~/intrusiongui/data/")
+            #         return
                     
             self.event_view_window.append("Input validated successfully!") # < - reports back to gui
             self.progressBar.setValue(5) # < - updates progress bar
@@ -110,6 +109,7 @@ class MainWindow(QMainWindow):
         '''
         Validate_fields makes sure input is > 0 and random seed is non-negative before proceeding to check for the required features and training the model.
         '''
+
     def validate_fields(self, chunks, epochs, seed) -> None:  # receive as params
 
         chunks: int = chunks
@@ -184,6 +184,7 @@ class MainWindow(QMainWindow):
     The show_plot function is responsible for displaying the generated F1 score charts in the GUI.
     It saves the plot to disk and then loads it into a scrollable dialog for viewing.
     '''    
+
     def display_plot(self, fig) -> None:
         import io
         from PyQt6.QtGui import QPixmap
@@ -211,10 +212,8 @@ class MainWindow(QMainWindow):
     def begin_train_model(self) -> None:
         self.progressBar.setValue(10) # < - updates progress bar
         QApplication.processEvents()  # < - allows GUI to update before continuing with training
-        
         self.trainingcompleteflag = False
-        #log=lambda msg, **kwargs: self.event_view_window.append(msg)  # Logged to provide visual feedback while training
-        log=lambda msg, **kwargs: self.event_view_window.append(str(msg))
+        log=lambda msg, **kwargs: self.event_view_window.append(str(msg)) # Logged to provide visual feedback while training
         results_log=lambda msg, **kwargs: self.results_window.append(str(msg)) # kwargs thrown in to allow for better flexibility and error-prevention
         
         self.progressBar.setValue(20) # < - updates progress bar

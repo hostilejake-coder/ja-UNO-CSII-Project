@@ -31,7 +31,6 @@ try:
     from PyQt6.QtWidgets import QApplication
     from sklearn.linear_model import SGDClassifier
     from sklearn.metrics import classification_report
-    from sklearn.metrics import confusion_matrix
     from sklearn.model_selection import train_test_split
     from sklearn.utils.class_weight import compute_class_weight
 except Exception as e:
@@ -67,7 +66,7 @@ class train_model:
         except Exception as e:
             import traceback
             log(f"Error while loading files: {e}")
-            log(traceback.format_exc())  # prints the full stack trace to your GUI log
+            log(traceback.format_exc())  # prints the full stack trace to GUI log
 
 
     '''
