@@ -3,7 +3,7 @@ CSCI-1620 — Startup Module
 """
 try:
     from PyQt6 import QtWidgets
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication, QMainWindow
     import sys
     from gui_logic import MainWindow
 except Exception as e:

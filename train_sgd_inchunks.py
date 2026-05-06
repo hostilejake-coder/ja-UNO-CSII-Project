@@ -46,11 +46,24 @@ class train_model:
         user_chunks_input: int
         user_enochs_input: int
         seed: int
-
+        #
         self.CHUNK_SIZE  = user_chunks_input
         self.RANDOM_SEED = seed
         self.N_EPOCHS    = user_enochs_input
         self.TEST_SIZE   = 0.2
+        self.tainingcompleteflag = False
+        #
+        self.y = None
+        self.le = None
+        self.classes = None
+        self.class_weights = None
+        self.class_weight_dict = None
+        self.train_idx = None
+        self.test_idx = None
+        self.X_mmap = None
+        self.y_test = None
+        self.y_pred = None
+        
     
     def load_files(self, y_encoded, label_encoder, log=print) -> None:
 

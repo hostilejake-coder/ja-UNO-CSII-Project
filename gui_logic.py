@@ -15,7 +15,7 @@ Output: Trained SGDClassifier model and evaluation results displayed in the GUI
 
 try:
     from PyQt6 import uic
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QApplication, QMainWindow, QCheckBox
     from train_sgd_inchunks import train_model
     from matplotlib.figure import Figure
     import os.path
@@ -32,10 +32,15 @@ class MainWindow(QMainWindow):
         super().__init__()
         uic.loadUi("ModelMakerGuiV3.ui", self)  # loads all your widgets directly onto self
         # Found this method online while looking for a way to implement a progress bar
-        self.default_file = self.user_file_input.toPlainText() or "cicids2017_cleaned.csv"
-        self.default_chunks = self.user_chunks_input.toPlainText() or "100_000"
-        self.default_epochs = self.user_enochs_input.toPlainText() or "2"
-        self.default_seed = self.user_randomseed_input.toPlainText() or "42"
+        self.file = self.user_file_input.toPlainText() or "cicids2017_cleaned.csv"
+        self.chunks = self.user_chunks_input.toPlainText() or "100_000"
+        self.epochs = self.user_enochs_input.toPlainText() or "2"
+        self.seed = self.user_randomseed_input.toPlainText() or "42"
+        self.trainer = None
+        #
+        self.x_scaled = "X_scaled.npy"
+        self.y_encoded = "y.encoded.npy"
+        self.label_encoder = "label_encoder.pkl"
         # Connect buttons to their respective functions
         self.generate_button.clicked.connect(self.validate_input)
         self.autofill_button.clicked.connect(self.autofill_inputs)
@@ -45,6 +50,13 @@ class MainWindow(QMainWindow):
         self.progressBar.setMaximum(100)
         self.progressBar.setValue(0)
         self.progressBar.hide()  # Hide progress bar until training starts
+        #
+        self.log=lambda msg, **kwargs: self.event_view_window.append(str(msg)) # Logged to provide visual feedback while training
+        self.trainingcompleteflag = False # <- trigger for charts plotting
+        self.missing_features_flag = False # < - Raised if supporting feature files are missing
+        #
+        self.chartscheckbox.stateChanged.connect(self.checkbox_toggled) # Updates checkbox plot features
+        
                 
     '''
         Buttons to autofill or clear values in GUI are defined below
@@ -52,10 +64,10 @@ class MainWindow(QMainWindow):
 
     def autofill_inputs(self) -> None:
         # Autofill with default values if auto fill button is pushed
-        self.user_file_input.setPlainText(self.default_file)
-        self.user_chunks_input.setPlainText(self.default_chunks)
-        self.user_enochs_input.setPlainText(self.default_epochs)
-        self.user_randomseed_input.setPlainText(self.default_seed)
+        self.user_file_input.setPlainText(self.file)
+        self.user_chunks_input.setPlainText(self.chunks)
+        self.user_enochs_input.setPlainText(self.epochs)
+        self.user_randomseed_input.setPlainText(self.seed)
 
     def clear_inputs(self) -> None:
         # Clear all input fields if clear button is pushed
@@ -63,6 +75,16 @@ class MainWindow(QMainWindow):
         self.user_chunks_input.clear()
         self.user_enochs_input.clear()
         self.user_randomseed_input.clear()
+
+    def checkbox_toggled(self):
+        if self.chartscheckbox.isChecked():
+            self.graphics_window.show()
+            if self.trainingcompleteflag == True:
+                fig = self.trainer.plot_f1_bars(log=self.log)
+                fig.savefig("f1_scores.png")
+                self.display_plot(fig)
+        else:
+            self.graphics_window.hide()
 
     '''
         The valid input looks for the raw CSV file in the current directory
@@ -73,7 +95,7 @@ class MainWindow(QMainWindow):
     def validate_input(self) -> None:
         self.progressBar.show() # < - show progress bar when validation starts
         try:
-            self.tainingcompleteflag = False # <- trigger for charts plotting
+            
             # The four lines below attempt convert the input values to the correct type, but will raise an error if the input is invalid (e.g. non-integer for chunks/epochs/seed or file that doesn't exist)
             self.chunks = int(self.user_chunks_input.toPlainText()) 
             self.epochs = int(self.user_enochs_input.toPlainText())
@@ -139,7 +161,6 @@ class MainWindow(QMainWindow):
     def check_features(self) -> None:
         self.progressBar.setValue(8) # < - updates progress bar
         QApplication.processEvents()  # < - allows GUI to update before continuing with training
-        missing_features = False
 
         if (os.path.isfile('X_scaled.npy') == False):
                 self.event_view_window.append("Missing preprocess feature: X_scaled.npy\nChecking Data Folder...")
@@ -149,7 +170,7 @@ class MainWindow(QMainWindow):
                     self.event_view_window.append(f"Feature found: {self.x_scaled}")  
                 else:                 
                     self.event_view_window.append("Feature not found in Data Folder")
-                    missing_features = True
+                    self.missing_features_flag = True
 
         if (os.path.isfile('y_encoded.npy') == False):
                 self.event_view_window.append("Missing preprocess feature: y_encoded.npy\nChecking Data Folder...")
@@ -159,7 +180,7 @@ class MainWindow(QMainWindow):
                     self.event_view_window.append(f"Feature found: {self.y_encoded}")  
                 else:                 
                     self.event_view_window.append("Feature not found in Data Folder")
-                    missing_features = True
+                    self.missing_features_flag = True
 
         if (os.path.isfile('label_encoder.pkl') == False):
                 self.event_view_window.append("Missing preprocess feature: label_encoder.pkl\nChecking Data Folder...")
@@ -169,9 +190,9 @@ class MainWindow(QMainWindow):
                     self.event_view_window.append(f"Feature found: {self.label_encoder}")  
                 else:                 
                     self.event_view_window.append("Feature not found in Data Folder")
-                    missing_features = True
+                    self.missing_features_flag = True
 
-        if missing_features: 
+        if self.missing_features_flag: 
             self.event_view_window.append("Missing required training features.\nPlease run the preprocessing script to generate the required features.")
             return
         else:
@@ -213,7 +234,6 @@ class MainWindow(QMainWindow):
         self.progressBar.setValue(10) # < - updates progress bar
         QApplication.processEvents()  # < - allows GUI to update before continuing with training
         self.trainingcompleteflag = False
-        log=lambda msg, **kwargs: self.event_view_window.append(str(msg)) # Logged to provide visual feedback while training
         results_log=lambda msg, **kwargs: self.results_window.append(str(msg)) # kwargs thrown in to allow for better flexibility and error-prevention
         
         self.progressBar.setValue(20) # < - updates progress bar
@@ -225,29 +245,26 @@ class MainWindow(QMainWindow):
         self.event_view_window.append("Beginning training …\n(this may take a few minutes)")
         self.progressBar.setValue(25) # < - updates progress bar
         QApplication.processEvents() # < - allows GUI to update before continuing with training
-        trainer = train_model(self.chunks, self.seed, self.epochs, log=log)
+        self.trainer = train_model(self.chunks, self.seed, self.epochs, log=self.log)
         self.progressBar.setValue(50) # < - updates progress bar
         QApplication.processEvents() # < - allows GUI to update before continuing with training
         
         self.event_view_window.append("Loading labels and encoder …")
-        trainer.load_files(self.y_encoded, self.label_encoder, log=log)
-        trainer.compute_weights(log=log)
+        self.trainer.load_files(self.y_encoded, self.label_encoder, log=self.log)
+        self.trainer.compute_weights(log=self.log)
         self.progressBar.setValue(75) # <- updates progress bar
         QApplication.processEvents() # < - allows GUI to update before continuing with training
 
-        trainer.train(self.x_scaled, log=log) 
+        self.trainer.train(self.x_scaled, log=self.log) 
         self.progressBar.setValue(99) # <- updates progress bar
         QApplication.processEvents() # < - allows GUI to update before continuing with training
 
-        trainer.evaluate_results(log=results_log)
+        self.trainer.evaluate_results(log=results_log)
         self.progressBar.setValue(99) # <- updates progress bar
         self.progressBar.hide() # < - hide progress bar when training is complete
         QApplication.processEvents() # < - allows GUI to update before continuing with training
         
         self.trainingcompleteflag = True # <-- Shows charts if box is checked
             
-        if self.chartscheckbox.isChecked() and self.trainingcompleteflag==True:
-            fig = trainer.plot_f1_bars(log=log)
-            fig.savefig("f1_scores.png")
-            self.display_plot(fig)
+        
             

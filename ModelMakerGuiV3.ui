@@ -239,7 +239,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Jakes Model Trainer &amp;amp; Visualizer 3.0&lt;/span&gt;&lt;span style=&quot; font-size:6pt;&quot;/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:6pt; font-style:italic;&quot;&gt;(Build for cicids2017_cleaned.ccsv data)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Jakes Model Trainer &amp;amp; Visualizer 3.2&lt;/span&gt;&lt;span style=&quot; font-size:6pt;&quot;/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:6pt; font-style:italic;&quot;&gt;(Build for cicids2017_cleaned.ccsv data)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QCheckBox" name="chartscheckbox">
